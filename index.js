@@ -4,8 +4,6 @@ function injectTheScript() {
     // query the active tab, which will be only one tab
     //and inject the script in it
     chrome.tabs.executeScript(tabs[0].id, {file: "sort.js"});
-
-    console.log('-------------executeScript------------');
   });
 }
 

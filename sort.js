@@ -1,14 +1,12 @@
 //TODO create resizer functionality
 
-
-
-
-// finding parents of lists
 var parentsWithKids = [];
 var SORTING_ALGO_ATTR = 'data-sorting-algo';
 var SORTING_ALGO = 'sorting-algo';
 var REVERSE = 'reverse';
 var NUMBERS = 'numbers';
+var parentClass = 'parentListSelectAlgos';
+var selectClass = 'ListSelectSortAlgos';
 var isSorting = false;
 var acceptablePositions = ['fixed', 'absolute', 'relative'];
 var unwantedTags = ['style', 'script', 'meta', 'link', 'body', 'head'];
@@ -17,11 +15,25 @@ var optionsHTMLString = '<option value="">Sort!</option>' +
 '<option value="reverse">Reverse</option>' +
 '<option value="numbers">Numbers</option>';
 
-function setSorting() { isSorting = true; };
+function setSorting() { isSorting = true; }
+
 function setNotSorting(height) {
   window.scroll(0, document.body.scrollTop - 1);
   isSorting = false;
-};
+}
+
+function createCss() {
+  var css = '.' + parentClass + '{border: 2px solid rgba(50, 150, 255); width: initial; }  .' + selectClass + '{border: 1px solid #fff; width: 10px; transition: width .25s; position: absolute; top: 5px; right: 5px; z-index: 9999999; padding: 6px 8px; font-size: 16px; color: #000; background-color: #3af; }  .' + selectClass + ':hover{width: 100px; } .sort-hover-parent, .sort-hover-parent > * { box-shadow: 3px 12px 9px #e2eff5; }';
+
+  var style = document.createElement('style');
+  if (style.styleSheet) {
+    style.styleSheet.cssText = css;
+  } else {
+    style.appendChild(document.createTextNode(css));
+  }
+
+  document.getElementsByTagName('head')[0].appendChild(style);
+}
 
 function reverseSort(listParent) {
   if (listParent.dataset[SORTING_ALGO] !== REVERSE) listParent.setAttribute(SORTING_ALGO_ATTR, REVERSE);
@@ -82,17 +94,6 @@ function onHover(listParent) {
     }
   }
 }
-var parentClass = 'parentListSelectAlgos';
-var selectClass = 'ListSelectSortAlgos';
-var style = document.createElement('style');
-var css = '.' + parentClass + '{border: 2px solid rgba(50, 150, 255); width: initial; }  .' + selectClass + '{border: 1px solid #fff; width: 10px; transition: width .25s; position: absolute; top: 5px; right: 5px; z-index: 9999999; padding: 6px 8px; font-size: 16px; color: #000; background-color: #3af; }  .' + selectClass + ':hover{width: 100px; } .sort-hover-parent, .sort-hover-parent > * { box-shadow: 3px 12px 9px #e2eff5; }';
-if (style.styleSheet) {
-  style.styleSheet.cssText = css;
-} else {
-    style.appendChild(document.createTextNode(css));
-}
-
-document.getElementsByTagName('head')[0].appendChild(style);
 
 function createSelect(parent) {
   var selectHandler = onSelect(parent);
@@ -117,7 +118,7 @@ function createSelect(parent) {
   parentsWithKids.push(parent);
 }
 
-secondChildren.forEach(item => {
+function walkChildrenitem(item) {
   if (unwantedTags.indexOf(item.tagName.toLowerCase()) !== -1) {
     return;
   }
@@ -140,8 +141,11 @@ secondChildren.forEach(item => {
 
   var nodeList = parent.parentElement.querySelectorAll(siblingsSelector);
   if (nodeList && nodeList.length > 2 && parentsWithKids.indexOf(parent) === -1) {
-    // create more algos and pass to create select
+    //TODO create more algos and pass to create select
 
     createSelect(parent);
   }
-});
+}
+createCss();
+
+secondChildren.forEach(walkChildrenitem);
