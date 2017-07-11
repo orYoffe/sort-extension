@@ -113,7 +113,7 @@ function createSelect(parent) {
   select.onmouseleave = hoverHandler;
   select.innerHTML = optionsHTMLString;
 
-  parent.appendChild(select);
+  parent.insertBefore(select, parent.firstChild);
   parentsWithKids.push(parent);
 }
 
@@ -145,6 +145,8 @@ function walkChildrenitem(item) {
     createSelect(parent);
   }
 }
+
+
 createCss();
 
 secondChildren.forEach(walkChildrenitem);
