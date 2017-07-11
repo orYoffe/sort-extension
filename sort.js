@@ -23,7 +23,7 @@ function setNotSorting(height) {
 }
 
 function createCss() {
-  var css = '.' + parentClass + '{border: 2px solid rgba(50, 150, 255); width: initial; }  .' + selectClass + '{border: 1px solid #fff; width: 10px; transition: width .25s; position: absolute; top: 5px; right: 5px; z-index: 9999999; padding: 6px 8px; font-size: 16px; color: #000; background-color: #3af; }  .' + selectClass + ':hover{width: 100px; } .sort-hover-parent, .sort-hover-parent > * { box-shadow: 3px 12px 9px #e2eff5; }';
+  var css = '.' + parentClass + '{border: 2px solid rgba(50, 150, 255); width: initial; }  .' + selectClass + '{border: 1px solid #fff; width: 10px; transition: width .25s; position: absolute; top: 5px; right: 5px; z-index: 9999999; padding: 6px 8px; font-size: 16px; color: #000; background-color: #3af; }  .' + selectClass + ':hover{width: 100px; } .sort-hover-parent, .sort-hover-parent > * { box-shadow: 3px 12px 9px #E2EF67; }';
 
   var style = document.createElement('style');
   if (style.styleSheet) {
@@ -68,7 +68,6 @@ function onSelect(listParent) {
       return;
     }
     if (e) e.stopPropagation();
-    console.log('--------event----', e);
     var sortAlgo = e && e.target.selectedOptions && e.target.selectedOptions[0].value || listParent.dataset[SORTING_ALGO];
     if (sortAlgo) {
       setSorting();
@@ -103,11 +102,11 @@ function createSelect(parent) {
   if (acceptablePositions.indexOf(position) === -1) {
     parent.style.position = 'relative';
   }
-  parent.className += ' ' + parentClass;
+  parent.classList.add(parentClass);
   parent.onchange = selectHandler;
 
   var select = document.createElement('select');
-  select.className += ' ' + selectClass;
+  select.classList.add(selectClass);
   select.onchange = selectHandler;
   select.onselect = selectHandler;
   select.onmouseover = hoverHandler;
