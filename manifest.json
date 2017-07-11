@@ -1,0 +1,30 @@
+{
+  "manifest_version": 2,
+
+  "name": "Sort",
+  "description": "This extension sorts the items on the current page",
+  "version": "1.0",
+  "permissions": ["tabs", "<all_urls>", "activeTab"],
+
+
+  "browser_action": {
+    "default_icon": {
+      "19": "images/icons/19.png",
+      "38": "images/icons/38.png"
+    },
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["index.js"]
+    }
+  ],
+  "icons": {
+    "16": "images/icons/16.png",
+    "19": "images/icons/19.png",
+    "38": "images/icons/38.png",
+    "64": "images/icons/64.png",
+    "128": "images/icons/128.png"
+  }
+}
