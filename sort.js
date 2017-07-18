@@ -9,11 +9,17 @@ var parentClass = 'parentListSelectAlgos';
 var selectClass = 'ListSelectSortAlgos';
 var isSorting = false;
 var acceptablePositions = ['fixed', 'absolute', 'relative'];
-var unwantedTags = ['style', 'script', 'meta', 'link', 'body', 'head'];
+var unwantedTags = ['style', 'script', 'meta', 'link', 'body', 'head', 'path', 'clipPath', 'svg'];
 var secondChildren = document.body.querySelectorAll('*:nth-child(2)');
 var optionsHTMLString = '<option value="">Sort!</option>' +
 '<option value="reverse">Reverse</option>' +
 '<option value="numbers">Numbers</option>';
+var timeRegex = /\d+:\d+/g;
+var numberRegex = /\d+/g;
+
+function convertToArray(arr) {
+  return Array.prototype.slice.call(arr);
+}
 
 function setSorting() { isSorting = true; }
 
@@ -37,17 +43,17 @@ function createCss() {
 
 function reverseSort(listParent) {
   if (listParent.dataset[SORTING_ALGO] !== REVERSE) listParent.setAttribute(SORTING_ALGO_ATTR, REVERSE);
-  var children = Array.prototype.slice.call(listParent.childNodes);
+  var children = convertToArray(listParent.childNodes);
   children.forEach(child => listParent.removeChild(child));
   children.reverse().forEach(child => listParent.appendChild(child));
 }
 
 function sortByNumbers(a, b) {
-  var biggestNumberA = a.outerHTML && a.outerHTML.match(/\d+/g);
+  var biggestNumberA = a.outerHTML && a.outerHTML.match(numberRegex);
   if (biggestNumberA && biggestNumberA.length) {
     biggestNumberA = biggestNumberA.sort(function(c, d) { return d - c;})[0];
   }
-  var biggestNumberB = b.outerHTML && b.outerHTML.match(/\d+/g);
+  var biggestNumberB = b.outerHTML && b.outerHTML.match(numberRegex);
   if (biggestNumberB && biggestNumberB.length) {
     biggestNumberB = biggestNumberB.sort(function(c, d) { return d - c;})[0];
   }
@@ -56,7 +62,7 @@ function sortByNumbers(a, b) {
 
 function numbersSort(listParent) {
   if (listParent.dataset[SORTING_ALGO] !== NUMBERS) listParent.setAttribute(SORTING_ALGO_ATTR, NUMBERS);
-  var children = Array.prototype.slice.call(listParent.childNodes);
+  var children = convertToArray(listParent.childNodes);
   children.forEach(child => listParent.removeChild(child));
   children.sort(sortByNumbers).forEach(child => listParent.appendChild(child));
 }
@@ -94,11 +100,26 @@ function onHover(listParent) {
   }
 }
 
-function createSelect(parent) {
+function walk(node, func) {
+    func(node);
+    node = node.firstChild;
+    while (node) {
+        walkTheDOM(node, func);
+        node = node.nextSibling;
+    }
+}
+
+function matchNumbers(str) {
+  return {
+    hasTime: timeRegex.test(str),
+    hasNumbers: numberRegex.test(str)
+  };
+}
+
+function createSelect(parent, selectOptions) {
   var selectHandler = onSelect(parent);
   var hoverHandler = onHover(parent);
   var position = window.getComputedStyle(parent).position;
-  // TODO change styles to be css
   if (acceptablePositions.indexOf(position) === -1) {
     parent.style.position = 'relative';
   }
@@ -111,42 +132,95 @@ function createSelect(parent) {
   select.onselect = selectHandler;
   select.onmouseover = hoverHandler;
   select.onmouseleave = hoverHandler;
+  if (selectOptions) {
+    // TODO add optionsHTMLString options
+  }
   select.innerHTML = optionsHTMLString;
 
   parent.insertBefore(select, parent.firstChild);
   parentsWithKids.push(parent);
 }
 
-function walkChildrenitem(item) {
+function findSortableItems(item) {
   if (unwantedTags.indexOf(item.tagName.toLowerCase()) !== -1) {
     return;
   }
   var parent = item.parentElement;
   var siblingsSelector = parent.tagName.toLowerCase().trim();
   if (parent.id) siblingsSelector += '#' + parent.id;
-  if (parent.className) siblingsSelector += '[class*="' + parent.className + '"]';
-  siblingsSelector += ' > ';
+  if (parent.name) siblingsSelector += '[name*="' + parent.name + '"]';
+  if (parent.className && parent.className.length) {
+    siblingsSelector += '[class*="' + parent.className.trim() + '"]';
+  }
+  siblingsSelector += ':not([type="hidden"]):not(.hidden) > ';
   siblingsSelector += item.tagName.toLowerCase();
+  if (item.id) siblingsSelector += '#' + item.id;
   if (item.className.length) {
-    var selectorStart = siblingsSelector.slice().trim();
+    var selectorParent = siblingsSelector.slice().trim();
     item.className.trim().split(' ').forEach(function(className, index) {
       if (index === 0) {
-        siblingsSelector = '[class*="' + className + '"]';
+        siblingsSelector += '[class*="' + className + '"]';
       } else {
-        siblingsSelector += ', ' + selectorStart + '[class*="' + className + '"]';
+        siblingsSelector += ':not([type="hidden"]):not(.hidden), ' + selectorParent + '[class*="' + className + '"]';
       }
     });
   }
+  siblingsSelector += ':not([type="hidden"]):not(.hidden)';
 
   var nodeList = parent.parentElement.querySelectorAll(siblingsSelector);
-  if (nodeList && nodeList.length > 2 && parentsWithKids.indexOf(parent) === -1) {
-    //TODO create more algos and pass to create select
+  var selectOptions;
+  if (nodeList && nodeList.length > 1 && parentsWithKids.indexOf(parent) === -1) {
+    if (item.hasChildNodes() && item.className && typeof item.className.indexOf === 'function' && item.className.indexOf('yt-shelf-grid-item yt-uix-shelfslider-item') > -1) {
+      debugger
+      walk(item, function (node) {
+        if (node.tagName && node.tagName.length) {
+          // split by new lines
+          var texts = node.innerText && node.innerText.match(/[^\r\n]+/g);
+          if (texts && texts.length > 0) {
+              var results = texts.map(matchNumbers);
+              results.forEach(function(i) {
+                if (i.hasNumbers && i.hasTime) {
+                  // TODO parse text next to time
+                  selectOptions.hasTime = true;
+                } else if (i.hasNumbers) {
+                  // TODO parse text next to number
+                  selectOptions.hasTime = true;
+                }
+              });
+              console.log('results', results);
 
-    createSelect(parent);
+          }
+        }
+      });
+    }
+    createSelect(parent, selectOptions);
   }
+}
+
+function resolveDisplayOverflow() {
+  var $selectList = document.querySelectorAll('.' + selectClass);
+  $selectList = convertToArray($selectList);
+  var positions = [];
+  $selectList.forEach(function(select) {
+    var rect = select.getBoundingClientRect();
+    var top = parseInt(rect.top, 10);
+    var left = parseInt(rect.left, 10);
+    var position = left + ' ' + top;
+    if (positions.indexOf(position) > -1) {
+      while (positions.indexOf(position) > -1) {
+        top += 40;
+        position = left + ' ' + top;
+      }
+      positions.push(position);
+      select.style.marginTop = top + 'px';
+    } else {
+      positions.push(position);
+    }
+  });
 }
 
 
 createCss();
 
-secondChildren.forEach(walkChildrenitem);
+secondChildren.forEach(findSortableItems);
+resolveDisplayOverflow();
