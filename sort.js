@@ -116,6 +116,8 @@ function matchNumbers(str) {
   };
 }
 
+function stopPropagation (e) {e.stopPropagation();}
+
 function createSelect(parent, selectOptions) {
   var selectHandler = onSelect(parent);
   var hoverHandler = onHover(parent);
@@ -130,6 +132,7 @@ function createSelect(parent, selectOptions) {
   select.classList.add(selectClass);
   select.onchange = selectHandler;
   select.onselect = selectHandler;
+  select.onclick = stopPropagation;
   select.onmouseover = hoverHandler;
   select.onmouseleave = hoverHandler;
   if (selectOptions) {
